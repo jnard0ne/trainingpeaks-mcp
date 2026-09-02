@@ -1,0 +1,49 @@
+# Keep this fork current with JamsusMaximus/trainingpeaks-mcp.
+#
+# Merges upstream main into our main daily (or on demand). A push to main
+# redeploys the Render service (render.yaml). If the merge conflicts, the job
+# fails and leaves main untouched; resolve it locally and push.
+#
+# Forks have scheduled workflows disabled until enabled once in the Actions tab.
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: "17 6 * * *"  # daily, 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/JamsusMaximus/trainingpeaks-mcp.git
+          git fetch upstream main
+
+      - name: Merge upstream/main
+        run: |
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "Already up to date with upstream."
+            exit 0
+          fi
+          git config user.name "John Nardone"
+          git config user.email "johncnardonejr@gmail.com"
+          if ! git merge --no-edit upstream/main; then
+            echo "::error::Merge conflict with upstream/main. Resolve locally: git fetch upstream && git merge upstream/main"
+            git merge --abort
+            exit 1
+          fi
+          git push origin main

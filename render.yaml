@@ -1,0 +1,31 @@
+# Render Blueprint for a hosted TrainingPeaks MCP server.
+#
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo. Render creates
+# the service below, generates TP_MCP_AUTH_TOKEN, and prompts for TP_AUTH_COOKIE.
+#
+# After the first deploy the MCP endpoint is https://<service>.onrender.com/mcp
+# and clients authenticate with "Authorization: Bearer <TP_MCP_AUTH_TOKEN>".
+# See docs/remote-deployment.md for client setup.
+services:
+  - type: web
+    name: trainingpeaks-mcp
+    runtime: python
+    # Free instances spin down after ~15 min idle and take up to a minute to
+    # wake, which can trip MCP client timeouts on the first call. Switch to
+    # "starter" (or keep /health pinged) if that bites.
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install .
+    startCommand: python -m tp_mcp.http_server
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.11
+      # Production_tpAuth cookie value from app.trainingpeaks.com (DevTools ->
+      # Application -> Cookies). Expires after a few weeks; paste a fresh one
+      # here when tp_auth_status reports it has expired.
+      - key: TP_AUTH_COOKIE
+        sync: false
+      # Shared secret MCP clients must present. Render generates it; copy it
+      # from the service's Environment tab into your client config.
+      - key: TP_MCP_AUTH_TOKEN
+        generateValue: true

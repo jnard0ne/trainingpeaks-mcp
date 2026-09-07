@@ -61,10 +61,24 @@ as a secret.
 ## Keeping the cookie fresh
 
 TrainingPeaks session cookies expire after a few weeks. When `tp_auth_status`
-reports the session has expired, paste a fresh `Production_tpAuth` value into
-`TP_AUTH_COOKIE` in the Render dashboard; Render restarts the service
-automatically. `tp_refresh_auth` cannot help here because there is no browser
-on the server.
+reports the session has expired, the hosted server needs a fresh
+`Production_tpAuth` value in `TP_AUTH_COOKIE`. `tp_refresh_auth` cannot help
+here because there is no browser on the server.
+
+From any machine that is logged into TrainingPeaks, run:
+
+```bash
+RENDER_API_KEY=rnd_... python scripts/push_cookie_to_render.py srv-<service-id> --from-browser chrome
+```
+
+It extracts the cookie from the browser, validates it, stores it locally for
+`tp-mcp serve`, and writes it to the service's environment through the Render
+API (the value is never printed). Render redeploys automatically. Omit
+`--from-browser` to push the cookie already stored by `tp-mcp auth`. The
+service id is the `srv-...` segment of the service's dashboard URL; create an
+API key under Account Settings -> API Keys.
+
+Pasting the value into the Render dashboard by hand works too.
 
 ## Security notes
 

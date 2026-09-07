@@ -283,6 +283,15 @@ Restart Claude Desktop. You're ready to go!
 
 ---
 
+### Option C: Hosted server (reach it from anywhere)
+
+The default `tp-mcp serve` speaks stdio, so it only works for a client on the
+same machine. `python -m tp_mcp.http_server` serves the identical tool set over
+MCP Streamable HTTP behind a shared secret, and `render.yaml` deploys it to
+Render as a small web service. Any MCP client - Claude Code on another machine,
+Claude Code on the web, claude.ai - can then use it. See
+[docs/remote-deployment.md](docs/remote-deployment.md).
+
 ## Structured Workouts
 
 Create workouts with full interval structure. The server auto-computes duration, IF, and TSS from the structure:
@@ -417,7 +426,7 @@ Claude cannot modify this via tool parameters. The only parameter is `browser` (
 
 ### No Network Exposure
 
-The MCP server uses **stdio transport only** - it communicates with Claude Desktop via stdin/stdout, not over the network. There is no HTTP server, no open ports, no remote access.
+By default the MCP server uses **stdio transport only** - it communicates with Claude Desktop via stdin/stdout, not over the network. There is no HTTP server, no open ports, no remote access unless you opt in by running `python -m tp_mcp.http_server`, which refuses to start without a shared secret and requires it on every request (see [docs/remote-deployment.md](docs/remote-deployment.md)).
 
 ### Open Source
 

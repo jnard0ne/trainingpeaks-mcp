@@ -6,9 +6,9 @@ The hosted server (see docs/remote-deployment.md) reads its cookie from the
 no browser on the server. This script closes that loop from a machine that
 *does* have the cookie: it reads the credential the same way ``tp-mcp serve``
 does (keyring, then encrypted file), optionally re-extracts it from a browser
-first, validates it against TrainingPeaks, and writes it to the Render
-service's environment through the Render API. Render redeploys the service
-automatically when an environment variable changes.
+first, validates it against TrainingPeaks, writes it to the Render service's
+environment through the Render API, and triggers a deploy so the running
+service picks it up (API-driven env-var changes do not redeploy on their own).
 
 The cookie value is never printed or logged.
 
@@ -47,9 +47,9 @@ def main(argv: list[str] | None = None) -> int:
         help="re-extract the cookie from a browser first (chrome, firefox, safari, edge, auto) and store it locally",
     )
     parser.add_argument(
-        "--deploy",
+        "--no-deploy",
         action="store_true",
-        help="also trigger a deploy explicitly (Render normally redeploys on its own when an env var changes)",
+        help="update the variable only; skip triggering the deploy the running service needs to pick it up",
     )
     args = parser.parse_args(argv)
 
@@ -89,13 +89,15 @@ def main(argv: list[str] | None = None) -> int:
             return _fail(f"Render API returned {response.status_code}: {response.text[:300]}")
         print(f"Updated {ENV_VAR_KEY} on {args.service_id}.")
 
-        if args.deploy:
+        if args.no_deploy:
+            print("Skipped deploy; the running service keeps the old value until it is redeployed.")
+        else:
+            # Env-var changes made through the API do not redeploy on their own
+            # (unlike edits in the dashboard), so kick one off explicitly.
             response = client.post(f"/services/{args.service_id}/deploys", json={})
             if response.status_code >= 400:
                 return _fail(f"deploy trigger returned {response.status_code}: {response.text[:300]}")
-            print("Deploy triggered.")
-        else:
-            print("Render will redeploy the service automatically to pick up the new value.")
+            print("Deploy triggered; the new cookie is live once it finishes.")
 
     return 0
 

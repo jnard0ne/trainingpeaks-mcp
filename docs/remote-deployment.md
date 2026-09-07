@@ -72,9 +72,10 @@ RENDER_API_KEY=rnd_... python scripts/push_cookie_to_render.py srv-<service-id> 
 ```
 
 It extracts the cookie from the browser, validates it, stores it locally for
-`tp-mcp serve`, and writes it to the service's environment through the Render
-API (the value is never printed). Render redeploys automatically. Omit
-`--from-browser` to push the cookie already stored by `tp-mcp auth`. The
+`tp-mcp serve`, writes it to the service's environment through the Render API
+(the value is never printed), and triggers a deploy so the running service
+picks it up. Omit `--from-browser` to push the cookie already stored by
+`tp-mcp auth`. The
 service id is the `srv-...` segment of the service's dashboard URL; create an
 API key under Account Settings -> API Keys.
 
